@@ -1,7 +1,6 @@
 import React from 'react';
 import withNavigation from '../../components/WithNavigationComponent/withNavigationComponent';
 
-import * as firebase from "firebase/app";
 import { Button, Card, Input, Spin } from 'antd';
 
 import { getRandomFood } from '../../utils';
@@ -14,15 +13,7 @@ class MainMenu extends React.Component {
   }
 
   componentDidMount = () => {
-    this.unsubscribe = firebase.firestore().collection('games').onSnapshot((querySnapshot) => {
-      const allDocs = [];
-      querySnapshot.forEach((doc) => {
-        allDocs.push({...doc.data(), id: doc.id})
-      });
-      this.setState({
-        allGames: allDocs
-      });
-    });
+    // TODO: Subscribe to the web socket
 
   }
 
@@ -39,11 +30,7 @@ class MainMenu extends React.Component {
         createGameButtonLoading: true,
       });
 
-      await firebase.firestore().collection('games').add({
-        gameName,
-        players: [],
-        food: getRandomFood()
-      });
+      // TODO: Add a game here
 
       this.setState({ createGameButtonLoading: false })
     }

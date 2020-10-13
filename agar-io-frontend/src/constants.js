@@ -1,6 +1,6 @@
 export const BOARD_SIZE = {
-  WIDTH: 1200,
-  HEIGHT: 1200,
+  WIDTH: 2500,
+  HEIGHT: 2500,
 }
 
-export const FOOD_COUNT = 100;
+export const FOOD_COUNT = 500;

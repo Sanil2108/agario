@@ -1,4 +1,5 @@
 import { BOARD_SIZE } from "../../constants";
+import { findDistance } from "../../utils";
 
 const CANVAS_SIZE = {
   WIDTH: 900,
@@ -12,8 +13,6 @@ const MAX_VELOCITY = 10;
 const ACCELERATION = 0.1;
 
 export default class Sketch {
-  addOnVelocityUpdateListener = (func) => {this.onVelocityUpdateListener = func;}
-
   sketchFunction = (sketch) => {
     this.sketch = sketch;
 
@@ -24,10 +23,7 @@ export default class Sketch {
 
   setup = () => {
     this.sketch.createCanvas(CANVAS_SIZE.WIDTH, CANVAS_SIZE.HEIGHT);
-    this.center = {
-      x: BOARD_SIZE.WIDTH / 2,
-      y: BOARD_SIZE.HEIGHT / 2,
-    }
+    this.center = []
   }
 
   draw = () => {
@@ -36,10 +32,43 @@ export default class Sketch {
     this.drawPlayer();
     this.drawOtherPlayers();
     this.drawFoods();
+
+    this.updatePositionOfCurrentPlayer();
+    this.checkFoodEaten();
   }
 
   mouseMoved = () => {
     this.updateVelocityOfCurrentPlayer();
+  }
+
+  checkFoodEaten = () => {
+    if (!this.allFoods) {
+      return;
+    }
+
+    for (let i = 0; i < this.allFoods.length; i += 1) {
+      if (findDistance(this.allFoods[i].position, this.playerData.position) < this.playerData.radius / 2) {
+        this.updateListeners.onFoodEatenUpdate(this.allFoods[i].id);
+      }
+    }
+  }
+
+  updatePositionOfCurrentPlayer = () => {
+    if (!this.playerData) {
+      return;
+    }
+
+    const currentPosition = [...this.playerData.position];
+    currentPosition[0] += this.playerData.velocity[0];
+    currentPosition[1] += this.playerData.velocity[1];
+
+    currentPosition[0] = Math.max((this.playerData.radius / 2), currentPosition[0]);
+    currentPosition[0] = Math.min(BOARD_SIZE.WIDTH - (this.playerData.radius / 2), currentPosition[0]);
+
+    currentPosition[1] = Math.max((this.playerData.radius / 2), currentPosition[1]);
+    currentPosition[1] = Math.min(BOARD_SIZE.HEIGHT - (this.playerData.radius / 2), currentPosition[1]);
+
+    this.updateListeners.onPositionUpdate(currentPosition)
   }
 
   updateVelocityOfCurrentPlayer = () => {
@@ -47,10 +76,10 @@ export default class Sketch {
       return;
     }
 
-    const currentVelocity = this.playerData.velocity;
+    const currentVelocity = [...this.playerData.velocity];
     const newVelocity = [
-      currentVelocity[0] + ((this.sketch.mouseX - (CANVAS_SIZE.WIDTH / 2)) * ACCELERATION),
-      currentVelocity[1] + ((this.sketch.mouseY - (CANVAS_SIZE.HEIGHT / 2)) * ACCELERATION),
+      ((this.sketch.mouseX - (CANVAS_SIZE.WIDTH / 2)) * ACCELERATION),
+      ((this.sketch.mouseY - (CANVAS_SIZE.HEIGHT / 2)) * ACCELERATION),
     ];
     
     newVelocity[0] = Math.min(MAX_VELOCITY, newVelocity[0]);
@@ -58,7 +87,8 @@ export default class Sketch {
 
     newVelocity[1] = Math.min(MAX_VELOCITY, newVelocity[1]);
     newVelocity[1] = Math.max(MIN_VELOCITY, newVelocity[1]);
-    this.onVelocityUpdateListener(newVelocity);
+
+    this.updateListeners.onVelocityUpdate(newVelocity);
   }
 
   drawFoods = () => {
@@ -67,8 +97,8 @@ export default class Sketch {
         const food = this.allFoods[i];
         this.sketch.fill(food.color[0], food.color[1], food.color[2])
         this.sketch.ellipse(
-          food.position[0] - (this.center.x - CANVAS_SIZE.WIDTH / 2),
-          food.position[1] - (this.center.y - CANVAS_SIZE.HEIGHT / 2),
+          food.position[0] - (this.center[0] - CANVAS_SIZE.WIDTH / 2),
+          food.position[1] - (this.center[1] - CANVAS_SIZE.HEIGHT / 2),
           FOOD_RADIUS,
           FOOD_RADIUS,
         )
@@ -79,7 +109,7 @@ export default class Sketch {
   drawPlayer = () => {
     if (this.playerData) {
       this.sketch.fill(this.playerData.color);
-      this.sketch.ellipse(CANVAS_SIZE.WIDTH / 2, CANVAS_SIZE.HEIGHT / 2, 100, 100)
+      this.sketch.ellipse(CANVAS_SIZE.WIDTH / 2, CANVAS_SIZE.HEIGHT / 2, this.playerData.radius, this.playerData.radius)
     }
   }
 
@@ -96,33 +126,15 @@ export default class Sketch {
   updateCurrentPlayer = (playerData) => {
     if (playerData) {
       this.playerData = playerData;
-      this.updateCenter(this.playerData.position[0], this.playerData.position[1]);
+      this.updateCenter();
     }
   }
 
-  updateCenter = (x, y) => {
-    let center = {};
+  updateCenter = () => {
+    this.center = this.playerData.position;
+  }
 
-    if (x < CANVAS_SIZE.WIDTH / 2) {
-      center.x = CANVAS_SIZE.WIDTH / 2;
-    }
-    else if (x > BOARD_SIZE.WIDTH - CANVAS_SIZE.WIDTH / 2) {
-      center.x = BOARD_SIZE.WIDTH - CANVAS_SIZE.WIDTH / 2;
-    }
-    else {
-      center.x = x;
-    }
-
-    if (y < CANVAS_SIZE.HEIGHT / 2) {
-      center.y = CANVAS_SIZE.HEIGHT / 2;
-    }
-    else if (y > BOARD_SIZE.HEIGHT - CANVAS_SIZE.HEIGHT / 2) {
-      center.y = BOARD_SIZE.HEIGHT - CANVAS_SIZE.HEIGHT / 2;
-    }
-    else {
-      center.y = y;
-    }
-
-    this.center = center;
+  addUpdateListeners = (updateListeners) => {
+    this.updateListeners = updateListeners;
   }
 }
