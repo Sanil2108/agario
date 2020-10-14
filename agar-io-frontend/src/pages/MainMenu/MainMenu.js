@@ -1,9 +1,9 @@
 import React from 'react';
-import withNavigation from '../../components/WithNavigationComponent/withNavigationComponent';
-
+import io from 'socket.io-client';
+import axios from 'axios';
 import { Button, Card, Input, Spin } from 'antd';
 
-import { getRandomFood } from '../../utils';
+import withNavigation from '../../components/WithNavigationComponent/withNavigationComponent';
 
 class MainMenu extends React.Component {
   state = {
@@ -13,8 +13,13 @@ class MainMenu extends React.Component {
   }
 
   componentDidMount = () => {
-    // TODO: Subscribe to the web socket
-
+    const socket = io('http://localhost:3001/');
+    socket.on('connect', () => {
+      socket.emit('listenToNewGames')
+    });
+    socket.on('allGames', (gameNames) => {
+      this.setState({ allGames: JSON.parse(gameNames) });
+    });
   }
 
   componentWillUnmount = () => {
@@ -30,16 +35,16 @@ class MainMenu extends React.Component {
         createGameButtonLoading: true,
       });
 
-      // TODO: Add a game here
+      await axios.post('http://localhost:3001/createGame', { gameName })
 
       this.setState({ createGameButtonLoading: false })
     }
   }
 
-  renderGameCard = (game) => {
+  renderGameCard = (gameName) => {
     return (
-      <Card key={game.gameName} title={game.gameName}>
-        <Button type="primary" onClick={this.props.goToGamePage.bind(this, game.id)}>Join !</Button>
+      <Card key={gameName} title={gameName}>
+        <Button type="primary" onClick={this.props.goToGamePage.bind(this, gameName)}>Join !</Button>
       </Card>
     );
   }

@@ -68,7 +68,9 @@ export default class Sketch {
     currentPosition[1] = Math.max((this.playerData.radius / 2), currentPosition[1]);
     currentPosition[1] = Math.min(BOARD_SIZE.HEIGHT - (this.playerData.radius / 2), currentPosition[1]);
 
-    this.updateListeners.onPositionUpdate(currentPosition)
+    if (this.playerData.velocity[0] !== 0 || this.playerData.velocity[1] !== 0) {
+      this.updateListeners.onPositionUpdate(currentPosition)
+    }
   }
 
   updateVelocityOfCurrentPlayer = () => {
