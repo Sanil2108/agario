@@ -1,11 +1,10 @@
-import { Input, Spin, Button, Modal } from 'antd';
+import { Input, Modal } from 'antd';
 import React, { Component, useState } from 'react'
 import io from 'socket.io-client';
 import p5 from 'p5';
 import Sketch from './sketch';
 
 import withNavigation from '../../components/WithNavigationComponent/withNavigationComponent';
-import { getRandomColor, getRandomFood } from '../../utils';
 
 class GamePage extends Component {
   state = {
@@ -25,33 +24,13 @@ class GamePage extends Component {
   componentDidMount = () => {
     this.socket = io('http://localhost:3001/');
 
-    // TODO: Subscribe to game updates here
-    // this.unsubscribe = firebase.firestore().doc(`games/${this.state.gameId}`).onSnapshot(doc => {
-    //   const docData = doc.data();
-    //   const { players, food } = docData;
-
-    //   this.sketch.updateOtherPlayers(players);
-    //   this.sketch.updateFoods(food);
-
-    //   const currentPlayer = players.find(player => this.state.playerName === player.name);
-    //   this.sketch.updateCurrentPlayer(currentPlayer);
-
-    //   this.setState({
-    //     gameData: docData,
-    //   })
-    // });
-
     this.sketch.addUpdateListeners({
       onVelocityUpdate: (newVelocity) => {
-        // TODO: Make API call here and handle the update when you subscribe to the data
-        // const currentPlayerIndex = this.gameData.allPlayers.findIndex(playerData => playerData.name === this.state.playerName);
-        // const currentPlayerData = this.gameData.allPlayers[currentPlayerIndex];
-        // currentPlayerData.velocity = newVelocity;
-        // const allPlayers = this.gameData.allPlayers;
-        // allPlayers.splice(currentPlayerIndex, 1);
-        // this.gameData = {...this.gameData, allPlayers: [...allPlayers, currentPlayerData]};
-
-        // this.sketch.updateCurrentPlayer(currentPlayerData);
+        this.socket.emit('updatePlayerVelocity', {
+          playerVelocity: newVelocity,
+          playerName: this.state.playerName,
+          gameName: this.state.gameName
+        });
       },
 
       onPositionUpdate: (newPosition) => {
@@ -63,30 +42,21 @@ class GamePage extends Component {
       },
 
       onFoodEatenUpdate: (foodEatenId) => {
-        // const currentPlayerIndex = this.gameData.allPlayers.findIndex(playerData => playerData.name === this.state.playerName);
-        // const currentPlayerData = this.gameData.allPlayers[currentPlayerIndex];
-        // currentPlayerData.radius += 1;
-        // const allPlayers = this.gameData.allPlayers;
-        // allPlayers.splice(currentPlayerIndex, 1);
-        // this.gameData = {...this.gameData, allPlayers: [...allPlayers, currentPlayerData]};
-        // this.gameData.foods.splice(this.gameData.foods.findIndex(foodData => foodData.id === foodEatenId), 1);
+        this.socket.emit('foodEaten', {
+          foodEatenId: foodEatenId,
+          playerName: this.state.playerName,
+          gameName: this.state.gameName,
+        });
+      },
 
-        // this.sketch.updateCurrentPlayer(currentPlayerData);
-        // this.sketch.updateFoods(this.gameData.foods);
+      onPlayerCollisionUpdate: (playerCollidedWith) => {
+        this.socket.emit('playerCollision', {
+          player2Name: playerCollidedWith,
+          player1Name: this.state.playerName,
+          gameName: this.state.gameName,
+        })
       }
     })
-
-    // this.sketch.addOnVelocityUpdateListener((newVelocity) => {
-    //   const players = [...this.state.gameData.players];
-    //   for (let i = 0; i < players.length; i += 1) {
-    //     if (players[i].name === this.state.playerName) {
-    //       players[i].velocity = newVelocity;
-    //       break;
-    //     }
-    //   }
-
-    //   // TODO: Emit an event to update the game state
-    // })
 
     new p5(this.sketch.sketchFunction, this.sketchRef.current)
   }
@@ -101,7 +71,6 @@ class GamePage extends Component {
 
     // TODO: Make API call here
     this.socket.on('gameUpdate', (gameData) => {
-      console.log('gameJoined')
       this.setState({playerName});
       this.setState({ joinGameButtonLoading: false });
 

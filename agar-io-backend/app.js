@@ -21,7 +21,6 @@ io.on('connect', (socket) => {
   });
 
   socket.on('joinGame', async ({gameName, playerName}) => {
-    console.log('joining', gameName, playerName)
     await databaseManager.addPlayer(gameName, playerName);
     socket.join(gameName);
     socket.emit('gameUpdate', await databaseManager.getGameData(gameName));
@@ -31,6 +30,21 @@ io.on('connect', (socket) => {
     await databaseManager.updatePlayerPosition(gameName, playerName, playerPosition);
     socket.emit('gameUpdate', await databaseManager.getGameData(gameName));
   });
+
+  socket.on('updatePlayerVelocity', async ({gameName, playerName, playerVelocity}) => {
+    await databaseManager.updatePlayerVelocity(gameName, playerName, playerVelocity);
+    socket.emit('gameUpdate', await databaseManager.getGameData(gameName));
+  });
+
+  socket.on('foodEaten', async ({gameName, playerName, foodEatenId}) => {
+    await databaseManager.playerEatsFood(gameName, playerName, foodEatenId);
+    socket.emit('gameUpdate', await databaseManager.getGameData(gameName));
+  });
+
+  socket.on('playerCollision', async ({gameName, player1Name, player2Name}) => {
+    await databaseManager.playersCollide(gameName, player1Name, player2Name);
+    socket.emit('gameUpdate', await databaseManager.getGameData(gameName));
+  })
 })
 
 // REST API

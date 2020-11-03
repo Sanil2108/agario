@@ -23,22 +23,38 @@ export default class Sketch {
 
   setup = () => {
     this.sketch.createCanvas(CANVAS_SIZE.WIDTH, CANVAS_SIZE.HEIGHT);
-    this.center = []
+    this.center = [];
+    this.sketch.strokeWeight(2);
+    this.sketch.stroke(44, 44, 44);
+    this.sketch.textAlign(this.sketch.CENTER);
   }
 
   draw = () => {
     this.sketch.background(255);
 
-    this.drawPlayer();
+    this.drawCurrentPlayer();
     this.drawOtherPlayers();
     this.drawFoods();
 
     this.updatePositionOfCurrentPlayer();
     this.checkFoodEaten();
+    this.checkCollision();
   }
 
   mouseMoved = () => {
     this.updateVelocityOfCurrentPlayer();
+  }
+
+  checkCollision = () => {
+    if (!this.otherPlayers) {
+      return;
+    }
+
+    for (let i = 0; i < this.otherPlayers.length; i += 1) {
+      if (findDistance(this.otherPlayers[i].position, this.playerData.position) < (this.playerData.radius + this.otherPlayers[i].radius) / 2) {
+        this.updateListeners.onPlayerCollisionUpdate(this.otherPlayers[i].playerName);
+      }
+    }
   }
 
   checkFoodEaten = () => {
@@ -78,7 +94,6 @@ export default class Sketch {
       return;
     }
 
-    const currentVelocity = [...this.playerData.velocity];
     const newVelocity = [
       ((this.sketch.mouseX - (CANVAS_SIZE.WIDTH / 2)) * ACCELERATION),
       ((this.sketch.mouseY - (CANVAS_SIZE.HEIGHT / 2)) * ACCELERATION),
@@ -108,21 +123,42 @@ export default class Sketch {
     }
   }
 
-  drawPlayer = () => {
+  drawPlayer = (playerData, position) => {
+    this.sketch.fill(playerData.color);
+    this.sketch.ellipse(position[0], position[1], playerData.radius, playerData.radius)
+    this.sketch.fill([255, 255, 255]);
+    this.sketch.textSize(24);
+    this.sketch.text(playerData.playerName, position[0], position[1]);
+  }
+
+  drawCurrentPlayer = () => {
     if (this.playerData) {
-      this.sketch.fill(this.playerData.color);
-      this.sketch.ellipse(CANVAS_SIZE.WIDTH / 2, CANVAS_SIZE.HEIGHT / 2, this.playerData.radius, this.playerData.radius)
+      this.drawPlayer(this.playerData, [CANVAS_SIZE.WIDTH / 2, CANVAS_SIZE.HEIGHT / 2]);
     }
   }
 
-  drawOtherPlayers = () => {}
+  drawOtherPlayers = () => {
+    if (this.otherPlayers) {
+      for (let i = 0; i < this.otherPlayers.length; i += 1) {
+        this.drawPlayer(
+          this.otherPlayers[i],
+          [
+            this.otherPlayers[i].position[0] - (this.center[0] - CANVAS_SIZE.WIDTH / 2),
+            this.otherPlayers[i].position[1] - (this.center[1] - CANVAS_SIZE.HEIGHT / 2)
+          ],
+        );
+      }
+    }
+  }
 
   updateFoods = (allFoods) => {
     this.allFoods = allFoods;
   }
 
   updateOtherPlayers = (playersData) => {
-
+    if (playersData) {
+      this.otherPlayers = playersData;
+    }
   }
 
   updateCurrentPlayer = (playerData) => {
