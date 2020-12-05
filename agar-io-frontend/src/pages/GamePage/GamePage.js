@@ -22,6 +22,10 @@ class GamePage extends Component {
   gameData = null;
 
   componentDidMount = () => {
+    this.reset();
+  }
+
+  reset = () => {
     this.socket = io('http://localhost:3001/');
 
     this.sketch.addUpdateListeners({
@@ -68,8 +72,6 @@ class GamePage extends Component {
 
     this.setState({ joinGameButtonLoading: true });
 
-
-    // TODO: Make API call here
     this.socket.on('gameUpdate', (gameData) => {
       this.setState({playerName});
       this.setState({ joinGameButtonLoading: false });
@@ -78,6 +80,11 @@ class GamePage extends Component {
 
       const otherPlayers = [...gameData.players];
       const currentPlayerIndex = gameData.players.findIndex(playerData => playerData.playerName === playerName);
+      if (currentPlayerIndex === -1) {
+        this.socket.close();
+        this.setState({ showGameOver: true, playerName: null }, this.reset);
+        return;
+      }
       otherPlayers.splice(currentPlayerIndex, 1);
       this.sketch.updateCurrentPlayer(gameData.players[currentPlayerIndex]);
       this.sketch.updateFoods(gameData.foods);
@@ -91,24 +98,16 @@ class GamePage extends Component {
   }
 
   render() {
-    const { gameName, playerName, joinGameButtonLoading } = this.state;
-
-    // TODO: Add a spinner
-    // if (!gameData) {
-    //   return <Spin size="large"></Spin>
-    // }
+    const { gameName, playerName, joinGameButtonLoading, showGameOver } = this.state;
 
     return (
       <>
         <div>
-
-          This is game page for game Id - {gameName}
-
           <div ref={this.sketchRef}>
 
           </div>
         </div>
-        <PlayerInformationModal isVisible={!playerName} onOk={this.joinGame} />
+        <PlayerInformationModal showGameOver={showGameOver} isVisible={!playerName} onOk={this.joinGame} />
       </>
     )
   }
@@ -123,6 +122,7 @@ function PlayerInformationModal (props) {
       onOk={props.onOk.bind(null, playerName)}
       okText="Join!"
     >
+      {props.showGameOver ? <div>Game Over! Join Again?</div> : null}
       <Input value={playerName} onChange={e => setPlayerName(e.target.value)}></Input>
     </Modal>);
 }

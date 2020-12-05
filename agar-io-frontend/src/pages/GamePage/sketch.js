@@ -2,8 +2,8 @@ import { BOARD_SIZE } from "../../constants";
 import { findDistance } from "../../utils";
 
 const CANVAS_SIZE = {
-  WIDTH: 900,
-  HEIGHT: 600,
+  WIDTH: 1920,
+  HEIGHT: 1080,
 }
 
 const FOOD_RADIUS = 5;
